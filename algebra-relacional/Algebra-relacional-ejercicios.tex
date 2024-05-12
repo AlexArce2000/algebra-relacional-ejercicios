@@ -1,0 +1,101 @@
+\documentclass[a4paper]{article}
+\usepackage{forest} % arbol
+\usepackage{titling} % titulos
+\usepackage{listings}
+\usepackage{geometry} % configuración de margenes
+\geometry{left=2cm,right=2cm,top=0.1cm,bottom=0.1cm} % Configura los márgenes
+\title{Base de datos II}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-2.5cm} % Ajusta el margen superior del título
+\section*{Álgebra Relacional}
+\section*{I. Dadas las relaciones A(a1, a2, ..., a20), B(b1, b2, ..., b12) y C(c1, c2, ..., c15) y la siguiente consulta:}
+\begin{center}
+\vspace{0.5cm} 
+\begin{lstlisting}[language=sql]
+    select distinct A.a1, C.c1 from A join B (A.a2 = B.b3)
+    join C (C.c2 = B.b4) where A.a1 > 10 and B.b1 = 50
+\end{lstlisting}
+\vspace{0.5cm}     
+\end{center}
+
+\section*{Muestre:}
+{\fontsize{15pt}{13pt}\selectfont 1. Su traducción directa al álgebra relacional. \newline
+2. Los pasos para llegar a la expresión equivalente que minimice la cantidad de datos procesados por cada operción \newline
+3. El árbol de evaluación de la expresión final.}
+
+\section*{Desarrollo:}
+{\fontsize{15pt}{17pt}\selectfont 1. $\prod_{A.a1, C.c1}(\sigma_{A.a1>10 \ \wedge \ B.b1 = 50 }(A \bowtie_{A.a2=B.b3} (B \bowtie_{C.c2=B.b4} C)))$  \newline \newline
+2. $\prod_{A.a1, C.c1}(\sigma_{A.a1>10}(A) \bowtie (\sigma_{B.b1=50}(B)\bowtie (C)))$ \textbf{REGLA 7:} Distribución del operador de selección \newline
+$\prod_{A.a1, C.c1}[ \ \prod_{A.a1,A.a2}(\sigma_{A.a1>10}(A)) \bowtie_{A.a2=B.b3} ( \ \prod_{B.b1,B.b3,B.b4}(\sigma_{B.b1=50}(B))\bowtie_{C.c2=B.b4}\prod_{C.c1,C.c2}(C) \ ) \ ]$ \textbf{REGLA 8:} Distribución del operador de proyección \newline
+$\prod_{A.a1, C.c1}[ \ ( \ \prod_{A.a1,A.a2}(\sigma_{A.a1>10}(A)) \bowtie_{A.a2=B.b3} \prod_{B.b1,B.b3,B.b4}(\sigma_{B.b1=50}(B)) \ ) \bowtie_{C.c2=B.b4}\prod_{C.c1,C.c2}(C) \ ]$ \textbf{REGLA 6:} Las operaciones de reunión natural son Asociativas \newline \newline
+3. 
+\begin{center}
+\begin{forest}
+[$\prod_{A.a1, C.c1}$
+    [$\bowtie_{C.c2=B.b4}$
+    [$\bowtie_{A.a2=B.b3}$
+        [$\prod_{A.a1,A.a2}$
+            [$\sigma_{A.a1>10}$
+                [$A$]
+            ]
+        ]
+        [$\prod_{B.b1,B.b3,B.b4}$
+            [$\sigma_{B.b1=50}$
+                [$B$]
+            ]
+        ]  
+    ]
+    [$C$]
+    ]   
+]
+\end{forest}   
+\end{center}
+}
+\section*{\newline \newline II. Dada la consulta de abajo, proporcione una traducción inicial de la misma en
+algebra relacional y luego proceda a ilustrar con la misma al menos dos casos de optimización conforme
+las reglas de equivalencias estudiadas}
+\begin{center}
+\begin{lstlisting}[language=sql]
+    select e.LNAME from EMPLEADO e
+    join TRABAJA_EN te on (te.EMPLEADO = e.ID)
+    join PROYECTO p on (p.ID = te.PROYECTO)
+    where p.PNOMBRE = 'AQUARIUS' and e.FECHA_NAC >= '2000-01-01'
+\end{lstlisting}    
+\end{center}
+
+\section*{Desarrollo:}
+{\fontsize{15pt}{17pt}\selectfont 
+$\prod_{e.LNAME} [ \sigma_{p.PNOMBRE='AQUARIUS' \wedge e.FECHA_NAC>='2000-01-01'}EMPLEADO 
+\newline 
+\bowtie_{te.EMPLEADO = e.ID} (TRABAJA\_ EN \bowtie_{p.ID = te.PROYECTO}PROYECTO)]$
+\newline\newline
+$\prod_{e.LNAME}[\sigma_{e.FECHA\_NAC >='2000-01-01'}(EMPLEADO)\bowtie_{te.EMPLEADO = e.ID}(\sigma_{p.ID=te.PROYECTO}(TRABAJA\_EN)\bowtie_{p.ID=te.PROYECTO}PROYECTO)]$
+\newline\textbf{REGLA 7:} Distribución del operador de selección
+\newline
+$\prod_{e.LNAME}[(\sigma_{e.FECHA\_NAC >='2000-01-01'}(EMPLEADO)\bowtie_{te.EMPLEADO = e.ID}\sigma_{p.ID=te.PROYECTO}(PROYECTO))\bowtie_{p.ID=te.PROYECTO}TRABAJA\_EN]$
+\newline  \textbf{REGLA 6:} Las operaciones de reunión natural son Asociativas
+\newline  \textbf{Plan de Ejecución} \newline
+
+\begin{forest}
+[$\prod_{e.LNAME}$
+    [$\bowtie_{p.ID=te.PROYECTO}$
+        [$\bowtie_{te.EMPLEADO = e.ID}$
+            [$\sigma_{e.FECHA\_NAC >='2000-01-01'}$
+            [$EMPLEADO$]
+            ]
+            [$\sigma_{p.ID=te.PROYECTO}$
+            [$PROYECTO$]
+            ]
+        ]
+        [$TRABAJA\_EN$]
+    ]
+]
+\end{forest}
+
+}
+
+
+
+\end{document}
